@@ -1,1 +1,1 @@
-Flight Planning Algorithm
+BEng Thesis - Flight Planning Algorithm for UAV
