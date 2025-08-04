@@ -4,7 +4,9 @@ A MATLAB-based flight path planning system for unmanned aerial vehicles (UAVs) t
 
 ## Overview
 
-This algorithm automatically computes safe flight paths between user-defined waypoints by detecting restricted areas and generating collision-free trajectories. The system performs two-stage optimization: initial obstacle avoidance followed by path shortening for minimal flight distance.
+![56a56d82-c393-4ea3-b827-409ed69161d4](https://github.com/user-attachments/assets/ed3bb117-8502-480d-bf91-d91f393bf013)
+
+This algorithm automatically computes optimal flight paths between user-defined waypoints by detecting restricted areas and generating collision-free trajectories. The system performs two-stage optimization: initial obstacle avoidance followed by path shortening for minimal flight distance.
 
 ## Algorithm Architecture
 
