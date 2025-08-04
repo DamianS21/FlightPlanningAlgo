@@ -1,26 +1,26 @@
 function [trasax,trasay] = intersection(xbef,ybef,xaft,yaft, xstart, ystart,xcel,ycel,xp,yp,limit) 
 %__________________________________________________________________%
-%|Skrypt generujê trase omijaj¹c¹ przeszkodê po krawêdziach strefy|%
-%|Do programu nale¿y podaæ punkt startu x, y oraz punkty celu x,y |%
-%|        punkty przeszkody x,y, iloœæ punktów przeszkody.        |%
-%|                    Damian Szumski 2018                         |%
-%|                  damianszumski@yahoo.com                       |%
+%|Script generates route avoiding obstacle along zone edges     |%
+%|Must provide start point x, y and destination points x,y      |%
+%|        obstacle points x,y, number of obstacle points.      |%
+%|                    Damian Szumski 2018                       |%
+%|                  damianszumski@yahoo.com                     |%
 %|________________________________________________________________|%
-%--------------- Etap VII Krok 2 Uwypuklenie przeszkody --------------%
+%--------------- Stage VII Step 2 Convexify obstacle --------------%
 znak=isconvex(xp,yp,limit);
 if(any(znak(:)<0))
     j = boundary(xp,yp,0);
-     plot(xp(j),yp(j)); %Rysowanie obrysu figury
+     plot(xp(j),yp(j)); %Draw figure outline
     xp=(xp(j))';
     yp=(yp(j))';
 end
 clear j
-%-------- Lokalizacja punktów przeciêcia z przeszkod¹ ---------------%
+%-------- Locate intersection points with obstacle ---------------%
 xt=[xstart xcel];
 yt=[ystart ycel];
 [xi,yi] = polyxpoly(xt,yt,xp,yp);
-%--- Ustawienie macierzy przeciecia zgodnie z kierunkiem lotu ----%
-if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
+%--- Set intersection matrix according to flight direction ----%
+if(~isempty(xi))%Check if there are intersections with figure.
     [maxi,p]=max(xi);
     [mini,l]=min(xi);
     KURS=heading(xstart,xcel,ystart,ycel);
@@ -36,19 +36,19 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
         yprzeciecia(2)=yi(p);
     end
     
-%- Etap 4. Wybór numerów punktów przypadaj¹ce jako pierwsze w locie stref¹-%
-%-------  Tworzenie macierzy odleg³oœci miêdzy punktami -----------%
+%- Stage 4. Select point numbers falling first in zone flight-%
+%-------  Create distance matrix between points -----------%
     limit_zredukowany=numel(xp)-1;
     for i=1:limit_zredukowany
-        dist(i)=sqrt((xp(i+1)-xp(i))^2+(yp(i+1)-yp(i))^2);%Odleg³oœæ miêdzy punktami
+        dist(i)=sqrt((xp(i+1)-xp(i))^2+(yp(i+1)-yp(i))^2);%Distance between points
     end
-%------------ Lokalizacja punktu przeciêcia wlotu ---------------%
+%------------ Locate entry intersection point ---------------%
     for i=1:(limit_zredukowany)
-        pdist(i)=sqrt((xp(i)-xprzeciecia(1))^2+(yp(i)-yprzeciecia(1))^2); %Odleglosc miêdzy pkt przeciêcia, a ka¿dym z punktów
+        pdist(i)=sqrt((xp(i)-xprzeciecia(1))^2+(yp(i)-yprzeciecia(1))^2); %Distance between intersection point and each point
     end
     for i=1:(limit_zredukowany)
         if(i<limit_zredukowany)
-            sumap1(i)=pdist(i)+pdist(i+1);%Suma kolejnych odleg³oœci miêdzy pkt przeciêcia, a ka¿dym z punktów
+            sumap1(i)=pdist(i)+pdist(i+1);%Sum of consecutive distances between intersection point and each point
         end
         if(i==limit_zredukowany)
             sumap1(i)=pdist(i)+pdist(1);
@@ -56,15 +56,15 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
         roznica(i)=abs(sumap1(i)-dist(i));
     end
     [temp, pkt1]=min(roznica);
-%------------ Lokalizacja punktu przeciêcia wylotu ---------------%
-    %--- Czyszczenie zmiennych pomocnicznych ---
+%------------ Locate exit intersection point ---------------%
+    %--- Clear auxiliary variables ---
     %
     for i=1:(limit_zredukowany)
-        pdist(i)=sqrt((xp(i)-xprzeciecia(2))^2+(yp(i)-yprzeciecia(2))^2); %Odleglosc miêdzy pkt przeciêcia, a ka¿dym z punktów
+        pdist(i)=sqrt((xp(i)-xprzeciecia(2))^2+(yp(i)-yprzeciecia(2))^2); %Distance between intersection point and each point
     end
     for i=1:(limit_zredukowany)
         if(i<limit_zredukowany)
-            sumap2(i)=pdist(i)+pdist(i+1);%Suma kolejnych odleg³oœci miêdzy pkt przeciêcia, a ka¿dym z punktów
+            sumap2(i)=pdist(i)+pdist(i+1);%Sum of consecutive distances between intersection point and each point
         end
         if(i==limit_zredukowany)
             sumap2(i)=pdist(i)+pdist(1);
@@ -73,15 +73,15 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
     end
     
     [temp, pkt2]=min(roznica);
-%------------- Etap VII Krok 4 Wyznaczanie trasy 1 ominiêcia przeszkody ---------------------%
-%-------------  Wyznaczanie iloœci punktów trasy 1------%
-    if(pkt2<(pkt1+1))%Jeœli punkt jest za koñcem tablicy 
-        iloscpkttrasa1=(limit_zredukowany-(pkt1+1))+pkt2 +1;%Ilosc elementow w tablicy zredukowanej (bez ostatniego) - pozycja pkt wejscia + pozycja pkt wyjscia -1(odj¹æ jego samego)
+%------------- Stage VII Step 4 Determine route 1 obstacle avoidance ---------------------%
+%-------------  Determine number of route 1 points------%
+    if(pkt2<(pkt1+1))%If point is beyond end of array 
+        iloscpkttrasa1=(limit_zredukowany-(pkt1+1))+pkt2 +1;%Number of elements in reduced array (without last) - entry point position + exit point position -1(subtract itself)
     else
         iloscpkttrasa1=abs((pkt2-(pkt1+1))+1);
     end
-%------------- Generowanie wspó³rzêdnych X trasy 1-----%
- trasax=[xbef];%Dodanie wspó³rzêdenj X punktu przewidywañ 1
+%------------- Generate X coordinates for route 1-----%
+ trasax=[xbef];%Add prediction point 1 X coordinate
     o=pkt1+1;
     for i=1:(iloscpkttrasa1)
         if(o>limit_zredukowany)
@@ -90,9 +90,9 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
         trasax=[trasax xp(o)];
         o=o+1; 
     end
-     trasax=[trasax xaft];%Dodanie wspó³rzêdenj X punktu przewidywañ 2
-%------------- Generowanie wspó³rzêdnych Y trasy 1 -----%
- trasay=[ybef]; %Dodanie wspó³rzêdnej Y punktu przewidywañ 1
+     trasax=[trasax xaft];%Add prediction point 2 X coordinate
+%------------- Generate Y coordinates for route 1 -----%
+ trasay=[ybef]; %Add prediction point 1 Y coordinate
     o=pkt1+1;
     for i=1:(iloscpkttrasa1)
         if(o>limit_zredukowany)
@@ -101,14 +101,14 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
         trasay=[trasay yp(o)];
         o=o+1;
     end
-     trasay=[trasay yaft]; %Dodanie wspó³rzêdnej Y punktu przewidywañ 2
-%------------- Etap VII Krok 5 Wyznaczanie trasy 2 ominiêcia przeszkody ---------------------%
-%------------- Wyznaczanie iloœci punktów trasy 2 ------%
+     trasay=[trasay yaft]; %Add prediction point 2 Y coordinate
+%------------- Stage VII Step 5 Determine route 2 obstacle avoidance ---------------------%
+%------------- Determine number of route 2 points ------%
     iloscpkttrasa2=limit_zredukowany-iloscpkttrasa1;
     if(iloscpkttrasa2<0)
         iloscpkttrasa2=0;
     end
-%------------- Generowanie wspó³rzêdnych X trasy 2 -----%
+%------------- Generate X coordinates for route 2 -----%
 %     trasax2=[xprzeciecia(1)];
  trasax2=[xbef];
     o=pkt1;
@@ -120,7 +120,7 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
         o=o-1;
     end
  trasax2=[trasax2 xaft];
-%-------------  Generowanie wspó³rzêdnych Y trasy 2 -----%
+%-------------  Generate Y coordinates for route 2 -----%
 %     trasay2=[yprzeciecia(1)];
  trasay2=[ybef];
     o=pkt1;
@@ -136,21 +136,21 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
 %     trasay2=[trasay2 yprzeciecia(2)];
 %     plot(trasax2,trasay2,'--r','LineWidth',2);
     
-%- Etap VII Krok 6 Wyznaczanie d³ugoœci tras i wybór krótszej trasy ------%
-%------------- Wyznaczanie d³ugoœci trasy 1 --------------------%
+%- Stage VII Step 6 Determine route lengths and select shorter route ------%
+%------------- Determine route 1 length --------------------%
    iloscpkttrasa1=numel(trasax);
    dist1=0;
    for i=1:(iloscpkttrasa1-1)
        dist1=dist1+sqrt((trasax(i+1)-trasax(i))^2+(trasay(i+1)-trasay(i))^2);
    end
 %         plot(trasax,trasay,'-mo','LineWidth',2);
-%------------- Wyznaczanie d³ugoœci trasy 2 --------------------%
+%------------- Determine route 2 length --------------------%
    iloscpkttrasa2=numel(trasax2);
    dist2=0;
    for i=1:(iloscpkttrasa2-1)
        dist2=dist2+sqrt((trasax2(i+1)-trasax2(i))^2+(trasay2(i+1)-trasay2(i))^2);
    end
-%------------- \ Decyzja która trasa jest krótsza  ---------------%
+%------------- \ Decision which route is shorter  ---------------%
    if(dist1<dist2)
         clear trasax2 trasay2;
    end
@@ -158,7 +158,7 @@ if(~isempty(xi))%Sprawdzanie czy s¹ przeciêcia z figur¹.
        trasax=trasax2;
        trasay=trasay2;
    end   
-%- Etap VII Krok 7 Usuniêcie pierwszego i ostatniego punktu z trasy ominiêcia przeszkody ------%
+%- Stage VII Step 7 Remove first and last point from obstacle avoidance route ------%
 trasax(1)=[];
 trasax(end)=[];
 trasay(1)=[];
@@ -169,7 +169,7 @@ iloscpkttrasa1=numel(trasax);
 
 
 end
-if(isempty(xi))%Je¿eli nie ma przeciêæ z figur¹
+if(isempty(xi))%If no intersections with figure
     trasax=[xstart xcel];
     trasay=[ystart ycel];
 end

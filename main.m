@@ -1,119 +1,119 @@
 %________________________________________________________________%
-%|         Program generuj¹cy strefy zakazane do przelotu.      |%
-%|   Pozwala on wybraæ miejsce rozpoczêcia startu i koñca lotu  |%
-%|  Nastêpnie generuje on trasê omijaj¹c¹ po krawêdziach stref  |%
-%|        W nastêpnym kroku generuje on trasê zoptymalizowan¹   |%
-%|  Do poprawnego dzia³ania programu nale¿y posiadaæ skrypty:   |%
-%|       isconvex.m, polygeom.m, okrag.m, circle_points.m       |%
-%|                 heading.m, intersection.m                    |%
-%|                oraz baze danych punktów                      |%
-%|                    Damian Szumski 2018                       |%
-%|                  damianszumski@yahoo.com                     |%
+%|         Program generating restricted flight zones.         |%
+%|   Allows selecting start and destination flight points      |%
+%|  Then generates route avoiding zone edges                   |%
+%|        Next step generates optimized route                  |%
+%|  For correct program operation, the following scripts       |%
+%|  are required: isconvex.m, polygeom.m, okrag.m,           |%
+%|       circle_points.m, heading.m, intersection.m           |%
+%|                and points database                          |%
+%|                    Damian Szumski 2018                      |%
+%|                  damianszumski@yahoo.com                    |%
 %|______________________________________________________________|%
-clear % Czyszczenie zmiennych
-clc % Czyszczenie konsoli
-%/---- W³asciwoœci wykresu ----/
+clear % Clear variables
+clc % Clear console
+%/---- Chart properties ----/
 axis square;
 grid on;
 axis equal;
 hold on
-%ylim([49 52]); %Zakres AIRAC
+%ylim([49 52]); %AIRAC range
 %xlim([19 24]);
- xlim([-20 150]); %Zakresy poligeni i strefy_testowe.m
+ xlim([-20 150]); %Ranges for poligeni and strefy_testowe.m
  ylim([0 150]);
-%--------------- Etap I - Wyznaczenie punktu startu i celu --------------%
-disp("Zaznacz punkt startu i naciœnij ENTER");
-[xstart,ystart] = getpts;              % Wprowadzenie startu przez u¿ytkownika
-plot(xstart,ystart,'r*')               % Dodatnie punktu na wykresie plot
+%--------------- Stage I - Determining start and destination points --------------%
+disp("Mark start point and press ENTER");
+[xstart,ystart] = getpts;              % User input for start point
+plot(xstart,ystart,'r*')               % Add point to plot
 if(or(isempty(xstart),isempty(ystart))) 
-error("Brak punktu startu!"); %Komunikat b³êdu gdy brak punktu
+error("Missing start point!"); %Error message when no point
 end
-%--------------------------- Wspó³rzêdne celu ---------------------------%
-disp("Zaznacz punkt celu i naciœnij ENTER"); %Informacja konsolowa
-[xcel,ycel] = getpts;                  % Wprowadzenie celu przez u¿ytkownika
-plot(xcel,ycel,'g*')                   % Dodatnie punktu na wykresie plot
+%--------------------------- Destination coordinates ---------------------------%
+disp("Mark destination point and press ENTER"); %Console information
+[xcel,ycel] = getpts;                  % User input for destination
+plot(xcel,ycel,'g*')                   % Add point to plot
 if(or(isempty(xcel),isempty(ycel)))
-    error("Brak punktu celu!");
+    error("Missing destination point!");
 end
 if(and(xstart==xcel,ystart==ycel))
-    error("B³¹d 1 - brak trasy");
+    error("Error 1 - no route");
 end
-%------  Informacje konsolowe -------%
+%------  Console information -------%
 clc;
-disp("Tworzenie trasy...");
-tic %Rozpoczêcie liczeniu czasu
-%-------------- Etap II - wyznaczenie prostej miêdzy startem, a celem -------------%
-coefficients = polyfit([xstart, xcel], [ystart, ycel], 1);  %Wspó³czynniki prostej kursowej
-a1 = coefficients (1);                  % przypisane wspó³cznnika a
-b1 = coefficients (2);                  % przypisanie wspó³czynnika b
-%-------------- Etap III - Okreœlenie obszaru przeszkuañ "przeszkód"------%
-%-------------- Wyznaczenie okrêgu opisanego na prostej start-cel --------%
-xpr=(xcel+xstart)/2;                    % Wyznaczenie œrodka okrêgu (X)
-ypr=(ycel+ystart)/2;                    % Wyznaczenie œrodka okrêgu (Y)
-rpr=sqrt((xcel-xpr)^2+(ycel-ypr)^2);    % Wyznaczneie promienia ko³a
-[xkoloa,ykoloa]=okrag(xpr,ypr,rpr);     % Generowanie okregu
-plot(xkoloa, ykoloa,'--b');             % Drukowanie okrêgu na p³aszczyŸnie
-%-------------- Baza danych przeszkód przszkód ---------------------%
- [xpunkt,ypunkt,xcentr,ycentr,r,xkolo,ykolo,lstref,lpkt]=poligeni; %ród³o
-% losowych przeszkód
-%strefy_testowe; %ród³o sztucznych przeszkód
-%data_AIRAC; %ród³o przeszkód cyklu AIRAC
-%---- Wyznaczanie iloœci stref ----%
+disp("Creating route...");
+tic %Start timing
+%-------------- Stage II - determining line between start and destination -------------%
+coefficients = polyfit([xstart, xcel], [ystart, ycel], 1);  %Direct route line coefficients
+a1 = coefficients (1);                  % assign coefficient a
+b1 = coefficients (2);                  % assign coefficient b
+%-------------- Stage III - Define obstacle area "obstacles"------%
+%-------------- Determine circle inscribed on start-destination line --------%
+xpr=(xcel+xstart)/2;                    % Determine circle center (X)
+ypr=(ycel+ystart)/2;                    % Determine circle center (Y)
+rpr=sqrt((xcel-xpr)^2+(ycel-ypr)^2);    % Determine circle radius
+[xkoloa,ykoloa]=okrag(xpr,ypr,rpr);     % Generate circle
+plot(xkoloa, ykoloa,'--b');             % Draw circle on plane
+%-------------- Obstacle database ---------------------%
+ [xpunkt,ypunkt,xcentr,ycentr,r,xkolo,ykolo,lstref,lpkt]=poligeni; %Source of
+% random obstacles
+%strefy_testowe; %Source of artificial obstacles
+%data_AIRAC; %Source of AIRAC cycle obstacles
+%---- Determining number of zones ----%
 lstref=numel(xpunkt(1,:));
-%-------------- Etap III-2 Opisanie okrêgu na poligonach -----------%
+%-------------- Stage III-2 Describe circles on polygons -----------%
 for i=1:lstref
     [xcentr(:,i),ycentr(:,i),r(i),xkolo(:,i),ykolo(:,i)]=circle_points(nonzeros(xpunkt(:,i)),nonzeros(ypunkt(:,i)));
-    lpkt(:,i)=numel(nonzeros(xpunkt(:,i)))-1;%Zera wystêpuj¹ gdy strefa ma mniej punktów
+    lpkt(:,i)=numel(nonzeros(xpunkt(:,i)))-1;%Zeros occur when zone has fewer points
 end
-kstref=[]; %Tworzenie wektora zawieraj¹cego numery stref oraz odle³oœci od œrodka
+kstref=[]; %Create vector containing zone numbers and distances from center
 for t=1:lstref
-%---------- Etap IV Okreœlenie przeszkód w zasiêgu -----------------%
+%---------- Stage IV Determine obstacles in range -----------------%
     in(:,t) = inpolygon(xkolo(:,t),ykolo(:,t),xkoloa,ykoloa);
-%- Etap V Przypisanie odleg³oœci i numerów stref w zasiêgu do macierzy kstref -%
+%- Stage V Assign distances and zone numbers in range to kstref matrix -%
     if(any(in(:,t))==1)
         kstref=[kstref [t;(sqrt((xcentr(:,t)-xstart)^2+(ycentr(:,t)-ystart)^2))]];
-        plot(nonzeros(xpunkt(:,t)),nonzeros(ypunkt(:,t)), 'x-');%Generowanie punktów w uk³adzie
+        plot(nonzeros(xpunkt(:,t)),nonzeros(ypunkt(:,t)), 'x-');%Generate points in system
     end
 end
-clear in;                               % Czyszczenie zbêdnych zmiennych
-if ~isempty(kstref)                     % jeœli trasa przelatuje przez strefy:
-    ilosc_stref=numel(kstref(1,:));     % Tworzenie zmiennej zawieraj¹c¹ iloœc stref znajduj¹cych siê w obrêbie okrêgu
-    kstref=sortrows(kstref',2,'ascend');%Sortowanie stref kolejnoœci¹ przelotu
-    xtrasa=[xstart];                    % Dodanie punktu startu jako pierwszy punkt trasy
+clear in;                               % Clear unnecessary variables
+if ~isempty(kstref)                     % if route passes through zones:
+    ilosc_stref=numel(kstref(1,:));     % Create variable containing number of zones within circle
+    kstref=sortrows(kstref',2,'ascend');%Sort zones in flight order
+    xtrasa=[xstart];                    % Add start point as first route point
     ytrasa=[ystart];
-    COURSE=[heading(xstart,xcel,ystart,ycel)]; % Generowanie kursów trasy
-%- Etap VI Wyznaczneie przeszkód kolizyjnych poprzez wyznaczenie punktów przeciêc prostej start-cel i okregów przeszkód % -------%
+    COURSE=[heading(xstart,xcel,ystart,ycel)]; % Generate route headings
+%- Stage VI Determine collision obstacles by finding intersection points of start-destination line and obstacle circles % -------%
     for licznik=1:ilosc_stref
-        t=kstref(licznik,1); % Przypisywanie numeru stref pod licznik
-        delta(t)=r(:,t)^2*(1+a1^2)-(ycentr(:,t)-a1*xcentr(:,t)-b1)^2;%(Wykorzystuje wsp. œrodka okrêgu)
-           %---- Warunek --------
+        t=kstref(licznik,1); % Assign zone numbers to counter
+        delta(t)=r(:,t)^2*(1+a1^2)-(ycentr(:,t)-a1*xcentr(:,t)-b1)^2;%(Uses circle center coordinates)
+           %---- Condition --------
         if(delta(t)>0)
-            %-------- Jeœli trasa jest ze wscodu na zachód -------------%
+            %-------- If route is east to west -------------%
             if(and(COURSE(1)>180,COURSE(1)<360))
                 xprzecieciaokregu(1,t)=((xcentr(:,t)+ycentr(:,t)*a1)-b1*a1+sqrt(delta(t)))/(1+a1^2);
                 xprzecieciaokregu(2,t)=((xcentr(:,t)+ycentr(:,t)*a1)-b1*a1-sqrt(delta(t)))/(1+a1^2);
                 yprzecieciaokregu(1,t)=(b1+(xcentr(:,t)*a1)+(ycentr(:,t)*a1^2)+a1*sqrt(delta(t)))/(1+a1^2);
                 yprzecieciaokregu(2,t)=(b1+(xcentr(:,t)*a1)+(ycentr(:,t)*a1^2)-a1*sqrt(delta(t)))/(1+a1^2);
-                kstref(licznik,3)=1;%Informacja do macierzy KSTREF o istnieniu przeciêæ
+                kstref(licznik,3)=1;%Information to KSTREF matrix about intersection existence
             else
-                %-------- Jeœli trasa jest ze zachód na wschód -------------%
+                %-------- If route is west to east -------------%
                 xprzecieciaokregu(2,t)=((xcentr(:,t)+ycentr(:,t)*a1)-b1*a1+sqrt(delta(t)))/(1+a1^2);
                 xprzecieciaokregu(1,t)=((xcentr(:,t)+ycentr(:,t)*a1)-b1*a1-sqrt(delta(t)))/(1+a1^2);
                 yprzecieciaokregu(2,t)=(b1+(xcentr(:,t)*a1)+(ycentr(:,t)*a1^2)+a1*sqrt(delta(t)))/(1+a1^2);
                 yprzecieciaokregu(1,t)=(b1+(xcentr(:,t)*a1)+(ycentr(:,t)*a1^2)-a1*sqrt(delta(t)))/(1+a1^2);
-                kstref(licznik,3)=1;%Informacja do macierzy KSTREF o istnieniu przeciêæ
+                kstref(licznik,3)=1;%Information to KSTREF matrix about intersection existence
             end
         else
             xprzecieciaokregu(1,t)=0;
             xprzecieciaokregu(2,t)=0;
             yprzecieciaokregu(1,t)=0;
             yprzecieciaokregu(2,t)=0;
-            kstref(licznik,3)=0;%Informacja do macierzy KSTREF o braku przeciêæ
+            kstref(licznik,3)=0;%Information to KSTREF matrix about no intersection
         end
     end
     ilosc_stref=numel(nonzeros(kstref(:,3)));
     licznik=1;
-    %----------- Etap VII Wyznaczenie trasy suboptymalnej ----------------%
+    %----------- Stage VII Determine suboptimal route ----------------%
      for i=1:ilosc_stref
              next=licznik+1;
          while(xprzecieciaokregu(1,kstref(licznik,1))==0)
@@ -124,47 +124,47 @@ if ~isempty(kstref)                     % jeœli trasa przelatuje przez strefy:
              while(xprzecieciaokregu(1,kstref(next,1))==0)
              next=next+1;
              end
-            %--Etap VII. Krok 1 Wczytanie punktów przeszkody i punktów przewidywañ -------%
-            %------  Generowanie ominiêæ przeszkód od przeciêcia do przeciêcia okrêgu strefy-------%
+            %--Stage VII. Step 1 Load obstacle points and prediction points -------%
+            %------  Generate obstacle avoidance from intersection to zone circle intersection-------%
             [trax,tray]=intersection(xtrasa(end),ytrasa(end),xprzecieciaokregu(1,kstref(next,1)),yprzecieciaokregu(1,kstref(next,1)),xprzecieciaokregu(1,kstref(licznik,1)),yprzecieciaokregu(1,kstref(licznik,1)),xprzecieciaokregu(2,kstref(licznik,1)),yprzecieciaokregu(2,kstref(licznik,1)),nonzeros(xpunkt(:,kstref(licznik,1))),nonzeros(ypunkt(:,kstref(licznik,1))),lpkt(:,kstref(licznik,1)));
             end
             if(i>=ilosc_stref)
-            %------  Generowanie ominiêæ przeszkody dla ostatniej strefy -------%
+            %------  Generate obstacle avoidance for last zone -------%
             [trax,tray]=intersection(xtrasa(end),ytrasa(end),xcel,ycel,xprzecieciaokregu(1,kstref(licznik,1)),yprzecieciaokregu(1,kstref(licznik,1)),xprzecieciaokregu(2,kstref(licznik,1)),yprzecieciaokregu(2,kstref(licznik,1)),nonzeros(xpunkt(:,kstref(licznik,1))),nonzeros(ypunkt(:,kstref(licznik,1))),lpkt(:,kstref(licznik,1)));
              end
-            %--Etap VII. Krok 7 £¹czenie trasy ominiêcia z dotyczasow¹ tras¹ suboptymlan¹ -------%
+            %--Stage VII. Step 7 Connect avoidance route with current suboptimal route -------%
             xtrasa=[xtrasa trax]; 
             ytrasa=[ytrasa tray];
             licznik=licznik+1;
      end
 
-    %Informacja konsolowa:
-    disp("Znaleziono trasê standardow¹");
-    %------------- Dodanie do koñca trasy punktu celu ------------------%
+    %Console information:
+    disp("Found standard route");
+    %------------- Add destination point to end of route ------------------%
     xtrasa=[xtrasa xcel];
     ytrasa=[ytrasa ycel];
     for i=1:(numel(xtrasa)-1)
         COURSE(i)=heading(xtrasa(i),xtrasa(i+1),ytrasa(i),ytrasa(i+1));
     end
-    %------------- Liczenie d³ugoœci trasy standardowej ---------------
+    %------------- Calculate standard route length ---------------
     iloscpkttrasa1=numel(xtrasa);
     diststand=0;
     for i=1:(iloscpkttrasa1-1)
-        diststand=diststand+sqrt((xtrasa(i+1)-xtrasa(i))^2+(ytrasa(i+1)-ytrasa(i))^2); %Wyznaczanie dystansu trasy
+        diststand=diststand+sqrt((xtrasa(i+1)-xtrasa(i))^2+(ytrasa(i+1)-ytrasa(i))^2); %Calculate route distance
     end
-    %--------------- Etap VIII - Wyznaczanie trasy optymalnej ------------------%
-    %---------------  Wyznaczanie mozliwych skrótów -------------%
+    %--------------- Stage VIII - Determine optimal route ------------------%
+    %---------------  Determine possible shortcuts -------------%
     rmax=opti(xtrasa,ytrasa,xpunkt,ypunkt,kstref);
     %lpkt=numel(xpunkt(:,1));
-    %------ Etap VIII Krok 4 - U¿ycie rmax do wyznaczenia optymalnej trasy ------%
-    %------ Tworzenie wektorów trasy optymalnej ------------%
+    %------ Stage VIII Step 4 - Use rmax to determine optimal route ------%
+    %------ Create optimal route vectors ------------%
     optx=[];
     opty=[];
     k=1;
     if(max(rmax)>0)
-    %-- Przypisywanie do optx, opty punktów trasy optymalnej u¿ywaj¹c rmax --%
+    %-- Assign to optx, opty optimal route points using rmax --%
         while(k<max(rmax))
-            if(or(k==rmax(k),rmax(k)==0)) %zabezpiecznie przed zablokowaniem algorytmu
+            if(or(k==rmax(k),rmax(k)==0)) %protection against algorithm blocking
                 rmax(k)=(rmax(k)+1)
                 optx(k)=xtrasa(nonzeros(rmax(k)))
                 opty(k)=ytrasa(nonzeros(rmax(k)))
@@ -178,16 +178,16 @@ if ~isempty(kstref)                     % jeœli trasa przelatuje przez strefy:
                 break;
             end
         end
-    %-------------------- Usuwanie podwójnych zer -----------------------%
-    %| Znajdywanie podwójnych zer wynikaj¹cych z dzia³ania algorytmu     |
-    %| przydzielaj¹cego punkty do wektorów optx, opty.                   |
-    %| nonzeros usuwa te¿ zera nale¿ace do punktów trasy                 |
-    %|___________________________________________________________________|
+    %-------------------- Remove double zeros -----------------------%
+    %| Finding double zeros resulting from algorithm operation       |
+    %| assigning points to optx, opty vectors.                      |
+    %| nonzeros also removes zeros belonging to route points        |
+    %|_______________________________________________________________|
         k=1;
         while(k<numel(optx))
         a=numel(optx);
             if(and(optx(k)==0,opty(k)==0))
-                %Usuwanie zer z wektorów trasy optymalnej optx, opty
+                %Remove zeros from optimal route vectors optx, opty
                 optx(k)=[];
                 opty(k)=[];
             else
@@ -201,41 +201,41 @@ if ~isempty(kstref)                     % jeœli trasa przelatuje przez strefy:
         if(max(rmax)==0)
             optx=[xtrasa];
             opty=[ytrasa];
-            disp("Trasa zoptymalizowana i standardowa s¹ identyczne");
+            disp("Optimized and standard routes are identical");
         end
         optx=[xstart optx];
         opty=[ystart opty];
         toc
         plot(optx,opty,'r');
-    %------ Liczenie d³ugoœci trasy optymalizowanej ----------%
+    %------ Calculate optimized route length ----------%
         iloscpkttrasa2=numel(optx);
         distopt=0;
         for i=1:(iloscpkttrasa2-1)
             distopt=distopt+sqrt((optx(i+1)-optx(i))^2+(opty(i+1)-opty(i))^2);
         end
         shortdist=sqrt((xcel-xstart)^2+(ycel-ystart)^2);
-    %------  Wyznaczanie kursu trasy optymalnej ----------%
+    %------  Determine optimal route heading ----------%
    for i=1:(iloscpkttrasa2-1)
         COURSE_OPT(i)=heading(optx(i),optx(i+1),opty(i),opty(i+1));
    end
-    %------ Porównywanie dystansów tras  -----------------------%
+    %------ Compare route distances  -----------------------%
         if (diststand>distopt)
-            disp("Znaleziono trasê zoptymalizowan¹");
-            disp(['Trasa optymalizowana jest krótsza o: ',num2str(diststand-distopt)]);
-            disp(['D³ugoœæ trasy suboptymalnej to: ',num2str(diststand)]);
-             disp(['D³ugoœæ trasy zoptymalizowanej to: ',num2str(distopt)]);
+            disp("Found optimized route");
+            disp(['Optimized route is shorter by: ',num2str(diststand-distopt)]);
+            disp(['Suboptimal route length: ',num2str(diststand)]);
+             disp(['Optimized route length: ',num2str(distopt)]);
         end
         if (distopt>diststand)
-            disp("Znaleziono trasê zoptymalizowan¹");
-            disp("Trasa standardowa jest krótsza.");
+            disp("Found optimized route");
+            disp("Standard route is shorter.");
         end
         if (distopt==diststand)
-            disp("Trasy s¹ równe");
+            disp("Routes are equal");
         end
     end
 
-else %Je¿eli trasa nie ma przeciêcia z okrêgiem:
-    disp("Nie wykryto przeciêæ z okrêgami.");
+else %If route has no intersection with circle:
+    disp("No intersections with circles detected.");
     ilosc_stref=0;
     xtrasa=[xstart xcel];
     ytrasa=[ystart ycel];

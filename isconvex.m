@@ -1,11 +1,11 @@
 function [znak]=isconvex(xp,yp,limit)
-%ISCONVEX Funkcja sprawdzajπcπ wypuk≥oúÊ figury po podaniu punktÛw tej
-%figury oraz jej iloúci. Funkcja zwraca znaki. Jeøeli ktÛryú z nich jest
-%mniejszy niø zero figura nie jest wypuk≥a.
-% Naleøy podaÊ wspÛ≥rzÍdne punktÛw figury oraz iloúÊ
-% Przyk≥ad uøycia: znak=iswypuke(wsp_x_figury, wsp_y_figury, ilosc_pkt);
+%ISCONVEX Function checking convexity of figure by providing points of this
+%figure and their quantity. Function returns signs. If any of them is
+%less than zero the figure is not convex.
+% Must provide figure point coordinates and quantity
+% Usage example: sign=isconvex(figure_x_coords, figure_y_coords, point_count);
 % (C) Damian Szumski 2018
-% èrÛd≥o: https://matlabgeeks.com/tips-tutorials/computational-geometry/check-convexity-of-polygon/
+% Source: https://matlabgeeks.com/tips-tutorials/computational-geometry/check-convexity-of-polygon/
 xd=xp(1:end-1);
 yd=yp(1:end-1);
 v1 = [xd(1) - xd(end), yd(1) - yd(end)];

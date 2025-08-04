@@ -23,7 +23,7 @@ data2=[50 57 59
 50 55 29   
 020 49 14   
 50 57 59   
-020 48 54   ];%EPR 18 Œwiêtokrzyski Park Narodowy
+020 48 54   ];%EPR 18 Swietokrzyski National Park
 data3=[49 37 17  
 020 03 24  
 49 35 59  
@@ -39,7 +39,7 @@ data3=[49 37 17
 49 34 44  
 020 01 14  
 49 37 17  
-020 03 24  ];%EPR 11 Gorczañski Park Narodowy
+020 03 24  ];%EPR 11 Gorczanski National Park
 data4=[50 32 59.0    
 022 03 53.7    
 50 26 59.0    
@@ -53,11 +53,11 @@ data4=[50 32 59.0
 50 31 59.0    
 021 54 53.7    
 50 32 59.0    
-022 03 53.7    ];%EPD25 Dêba
-n=4;%ilosc stref
+022 03 53.7    ];%EPD25 Deba
+n=4;%number of zones
 xpunkt=zeros(n,9);
 ypunkt=zeros(n,9);
-[e1 w1]=konwersja(data1); %Konwersja to funkcja s³u¿aca tylko obs³udze Ÿle sformatowanych danych
+[e1 w1]=konwersja(data1); %Conversion function for handling poorly formatted data
 [e2 w2]=konwersja(data2);
 [e3 w3]=konwersja(data3);
 [e4 w4]=konwersja(data4);
